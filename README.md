@@ -1,6 +1,8 @@
 # AutoTCLog
 Writing timecode logs manually is tedious and time consuming. AutoTCLog gets the worst of it done fast so you only have to fill in the easy parts.
 
+This is a CLI program, if you want a GUI version, check out [AutoTCLog-GUI](https://github.com/sykesgabri/AutoTCLog-GUI)
+
 ## Dependencies
 * Python3
 * Pandas (install with `pip install pandas`)

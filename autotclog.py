@@ -1,11 +1,14 @@
 import os
 import glob
 import pandas as pd
+import colorama
+from colorama import Fore, Back, Style
 
 # display ascii art logo
 with open('logo.txt', 'r', encoding='utf-8') as file:
     art = file.read()
-print(art)
+print(Fore.MAGENTA + art)
+print(Style.RESET_ALL + 'Version 1.0.1\n')
 
 # function to get video metadata
 def get_metadata(path):
@@ -13,28 +16,62 @@ def get_metadata(path):
     video_files = glob.glob(os.path.join(path, '*.mp4')) + \
                   glob.glob(os.path.join(path, '*.avi')) + \
                   glob.glob(os.path.join(path, '*.mov')) + \
-                  glob.glob(os.path.join(path, '*.mts'))
+                  glob.glob(os.path.join(path, '*.mpg'))
 
     metadata = []
-    framerates = set()
+    framerates = []
     for file in video_files:
         # get video metadata
-        fps_string = os.popen(f'ffprobe -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 -show_entries stream=r_frame_rate {file}').read().strip()
+        fps_string = os.popen(f'ffprobe -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 -show_entries stream=r_frame_rate "{file}"').read().strip()
         fps_parts = fps_string.split('/')
         if len(fps_parts) == 2:
             fps = float(fps_parts[0]) / float(fps_parts[1])
         else:
-            fps = float(fps_string)
-        duration = float(os.popen(f'ffprobe -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 -show_entries stream=duration {file}').read())
-        metadata.append({
-            'file': file,
-            'fps': fps,
-            'duration': duration
-        })
-        framerates.add(fps)
+            if '\n' in fps_string:
+                fps_list = []
+                for x in fps_string.split('\n'):
+                    x = x.strip()
+                    try:
+                        fps_list.append(float(x))
+                    except ValueError:
+                        print(f"Error: could not convert '{x}' to float for file '{file}'")
+                if len(fps_list) == 0:
+                    fps = None
+                elif len(fps_list) == 1:
+                    fps = fps_list[0]
+                else:
+                    fps = sum(fps_list) / len(fps_list)
+            else:
+                try:
+                    fps = float(fps_string)
+                except ValueError:
+                    print(f"Error: could not convert '{fps_string}' to float for file '{file}'")
+                    fps = None
+        duration_string = os.popen(f'ffprobe -v error -select_streams v -of default=noprint_wrappers=1:nokey=1 -show_entries stream=duration "{file}"').read()
+        try:
+            duration = float(duration_string.strip())
+        except ValueError:
+            duration_parts = duration_string.strip().split('\n')
+            duration_list = [float(x) for x in duration_parts if x.strip()]
+            if len(duration_list) == 0:
+                duration = None
+            elif len(duration_list) == 1:
+                duration = duration_list[0]
+            else:
+                duration = sum(duration_list) / len(duration_list)
+            if duration is None:
+                print(f"Error: could not convert '{duration_string}' to float for file '{file}'")
+        
+        if fps is not None and duration is not None:
+            metadata.append({
+                'file': file,
+                'fps': fps,
+                'duration': duration
+            })
+            framerates.append(fps)
 
     # check for multiple framerates
-    if len(framerates) > 1:
+    if len(set(framerates)) > 1:
         print("Note: It is advised to keep video files with different framerates in separate folders for this program to work best.")
 
     return metadata
@@ -52,7 +89,6 @@ def frame_to_timecode(frame, fps):
     return f'{h:02d}:{m:02d}:{s:02d}:{f:02d}'
 
 # get folder path from user input
-print("Note: Spaces in folder names can cause errors.")
 path = input('Enter folder path: ')
 print("Scanning folder, please wait...")
 
@@ -93,16 +129,16 @@ for i, file_metadata in enumerate(metadata):
     # add row to dataframe
     if output_path:
         file_name = os.path.basename(file) if output_file_path else file
-        file_path = os.path.join(output_path, file_name + '.xlsx')
+        file_path = os.path.join(output_path, f'{file_name}.xlsx')
     else:
         file_path = os.path.splitext(file)[0] + '.xlsx'
     df.loc[i] = [file_path, timecode_in, timecode_out, '', '', '']
 
 # save dataframe to excel file
 if output_path:
-    file_path = os.path.join(output_path, output_file + '.xlsx')
+    file_path = os.path.join(output_path, f'{output_file}.xlsx')
 else:
-    file_path = os.path.join(path, output_file + '.xlsx')
+    file_path = os.path.join(path, f'{output_file}.xlsx')
 df.to_excel(file_path, index=False)
 
 print(f"Output file saved to {file_path}")

@@ -1,13 +1,28 @@
 # AutoTCLog
 Writing timecode logs manually is tedious and time consuming. AutoTCLog gets the worst of it done fast so you only have to fill in the easy parts.
 
-This is a CLI program, if you want a GUI version, check out [AutoTCLog-GUI](https://github.com/sykesgabri/AutoTCLog-GUI)
-
 ## Dependencies
-* Python3
+* Python 3
 * Pandas (install with `pip install pandas`)
 * OpenPyXL (install with `pip install openpyxl`)
+* Colorama (install with `pip install colorama`)
 * FFmpeg
+
+## Installing Python 3
+AutoTCLog is programmed in Python 3. Python 3 must be installed on your computer for the program to work. Here's how to install Python 3 on Windows, MacOS, or Linux:
+
+Windows:
+* Go to https://www.python.org/downloads/windows/ and click the link that says "Latest Python 3 Release", choose "Windows installer (64-bit)" under files at the bottom of the page.
+* Open the installer, make sure that "Use admin privileges when installing py.exe" and "Add python.exe to PATH" are checked, click "Customize installation", make sure all optional features are checked, check "Install for all users" under advanced options, do not customize install location, click "Install".
+* When the install is finished, click "Disable PATH length limit."
+* Restart your PC.
+
+MacOS:
+* Install Homebrew from https://brew.sh/
+* Open a terminal and run the following command: `brew install python3`
+
+Linux:
+* Use your distro's package manager to install the `python` or `python3` package
 
 ## Installing FFmpeg
 AutoTCLog uses FFmpeg to extract video metadata. FFmpeg must be installed on your computer for the program to work. Here's how to install FFmpeg on Windows, MacOS, or Linux:

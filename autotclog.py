@@ -8,15 +8,22 @@ from colorama import Fore, Back, Style
 with open('logo.txt', 'r', encoding='utf-8') as file:
     art = file.read()
 print(Fore.MAGENTA + art)
-print(Style.RESET_ALL + 'Version 1.0.1\n')
+print(Style.RESET_ALL + 'Version 1.1.0\n')
 
 # function to get video metadata
 def get_metadata(path):
     # scan for video files
     video_files = glob.glob(os.path.join(path, '*.mp4')) + \
+                  glob.glob(os.path.join(path, '*.MP4')) + \
                   glob.glob(os.path.join(path, '*.avi')) + \
+                  glob.glob(os.path.join(path, '*.AVI')) + \
                   glob.glob(os.path.join(path, '*.mov')) + \
-                  glob.glob(os.path.join(path, '*.mpg'))
+                  glob.glob(os.path.join(path, '*.MOV')) + \
+                  glob.glob(os.path.join(path, '*.mpg')) + \
+                  glob.glob(os.path.join(path, '*.MPG'))
+
+    # Sort files by creation time
+    video_files.sort(key=os.path.getctime)
 
     metadata = []
     framerates = []
@@ -61,7 +68,7 @@ def get_metadata(path):
                 duration = sum(duration_list) / len(duration_list)
             if duration is None:
                 print(f"Error: could not convert '{duration_string}' to float for file '{file}'")
-        
+
         if fps is not None and duration is not None:
             metadata.append({
                 'file': file,
@@ -108,12 +115,12 @@ output_path = input('Enter a file path, or leave blank to save in the same locat
 output_file = input('Enter a file name for the output excel file (excluding file extension): ')
 
 # create pandas dataframe to store results
-df = pd.DataFrame(columns=['File', 'Timecode In', 'Timecode Out', 'Scene Number', 'Shot Number', 'Usable'])
+df = pd.DataFrame(columns=['Director', 'Producer', 'DOP', 'File', 'Roll', 'Scene', 'Slate', 'Take', 'Comments', 'Timecode In', 'Timecode Out', 'Usable'])
 
-# process each video file
+## process each video file
 for i, file_metadata in enumerate(metadata):
     # get file name and metadata
-    file = file_metadata['file']
+    file = os.path.basename(file_metadata['file'])
     fps = file_metadata['fps']
     duration = file_metadata['duration']
 
@@ -121,18 +128,19 @@ for i, file_metadata in enumerate(metadata):
     if i == 0:
         timecode_in = start_timecode
     else:
-        timecode_in = df.loc[i-1, 'Timecode Out']
+        # Adjusting the timecode in by one frame ahead of the previous row's timecode out
+        frame_offset = 1 if i != 0 else 0
+        timecode_in = frame_to_timecode(timecode_to_frame(df.loc[i - 1, 'Timecode Out'], fps) + frame_offset, fps)
     frame_in = timecode_to_frame(timecode_in, fps)
     frame_out = frame_in + duration * fps
     timecode_out = frame_to_timecode(frame_out, fps)
 
     # add row to dataframe
     if output_path:
-        file_name = os.path.basename(file) if output_file_path else file
-        file_path = os.path.join(output_path, f'{file_name}.xlsx')
+        file_path = os.path.join(output_path, f'{file}.xlsx')
     else:
-        file_path = os.path.splitext(file)[0] + '.xlsx'
-    df.loc[i] = [file_path, timecode_in, timecode_out, '', '', '']
+        file_path = os.path.splitext(file_metadata['file'])[0] + '.xlsx'
+    df.loc[i] = ['', '', '', file, '', '', '', '', '', timecode_in, timecode_out, '']
 
 # save dataframe to excel file
 if output_path:

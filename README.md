@@ -1,3 +1,6 @@
+# IMPORTANT
+This version of the program is the deprecated Python version, this repo will remain available for archival purposes, but will no longer be updated. For the new version of this program, written in Rust, go [here](https://github.com/sykesgabri/AutoTCLog-RS).
+
 # AutoTCLog
 Writing timecode logs manually is tedious and time consuming. AutoTCLog gets the worst of it done fast so you only have to fill in the easy parts.
 
